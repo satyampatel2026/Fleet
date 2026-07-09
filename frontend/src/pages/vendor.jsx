@@ -5,104 +5,98 @@ import {
   Edit,
   Trash2,
   X,
-  Building2,
+  Users,
   User,
   Mail,
   Phone,
-  MapPin,
+  Shield,
   CheckCircle,
   XCircle,
   Loader2,
 } from "lucide-react";
 
 export default function PartnersManagement() {
-  const [partners, setPartners] = useState([]);
-  const [filteredPartners, setFilteredPartners] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingPartner, setEditingPartner] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({
-    company_name: "",
-    name: "",
+    full_name: "",
     email: "",
-    phone: "",
     password: "",
-    address: "",
-    status: "active",
-    });
+    role_id: 2,
+    status: "ACTIVE",
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Delete confirmation
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Fetch partners
-  const fetchPartners = async () => {
+  // Fetch users
+  const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:3002/api/partners");
-      console.log("Response status:", response.status);
-      if (!response.ok) throw new Error("Failed to fetch vendors");
+      const response = await fetch("http://localhost:3000/api/partners");
+      if (!response.ok) throw new Error("Failed to fetch users");
       const data = await response.json();
-      console.log("API DATA:", data);
-      setPartners(data);
-      setFilteredPartners(data);
+      console.log("Users:", data);
+      setUsers(data);
+      setFilteredUsers(data);
     } catch (err) {
-      setError("Failed to load vendors");
+      setError("Failed to load users");
       console.error(err);
     } finally {
-      setLoading(false);  
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchPartners();
+    fetchUsers();
   }, []);
 
   // Search filter
   useEffect(() => {
     const term = searchTerm.toLowerCase().trim();
     if (!term) {
-      setFilteredPartners(partners);
+      setFilteredUsers(users);
     } else {
-      const filtered = partners.filter(
-        (p) =>
-          p.company_name.toLowerCase().includes(term) ||
-          p.name.toLowerCase().includes(term) ||
-          p.email.toLowerCase().includes(term) ||
-          p.phone.includes(term)
+      const filtered = users.filter(
+        (u) =>
+          u.full_name.toLowerCase().includes(term) ||
+          u.email.toLowerCase().includes(term) ||
+          (u.role_name || "").toLowerCase().includes(term)
       );
-      setFilteredPartners(filtered);
+      setFilteredUsers(filtered);
     }
-  }, [searchTerm, partners]);
+  }, [searchTerm, users]);
 
   // Open modal for add/edit
-  const openModal = (partner = null) => {
-    if (partner) {
-      setEditingPartner(partner);
-     setFormData({
-  user_id: partner.user_id,
-  company_name: partner.company_name,
-  name: partner.name,
-  phone: partner.phone,
-  email: partner.email,
-  address: partner.address || "",
-  status: partner.status,
-});
-    } else {
-      setEditingPartner(null);
+  const openModal = (user = null) => {
+    if (user) {
+      setEditingUser(user);
       setFormData({
-        company_name: "",
-        name: "",
-        phone: "",
+        id: user.user_id,
+        full_name: user.full_name,
+        email: user.email,
+        role_id: user.role_id,
+        status: user.status,
+        // password is not sent back, so we leave it empty
         password: "",
+      });
+    } else {
+      setEditingUser(null);
+      setFormData({
+        full_name: "",
         email: "",
-        address: "",
-        status: "active",
+        password: "",
+        role_id: 2,
+        status: "ACTIVE"
       });
     }
     setIsModalOpen(true);
@@ -110,123 +104,129 @@ export default function PartnersManagement() {
 
   const closeModal = () => {
     setIsModalOpen(false);
-    setEditingPartner(null);
+    setEditingUser(null);
     setFormData({
-      company_name: "",
-      name: "",
-      phone: "",
-      password: "",
+      full_name: "",
       email: "",
-      address: "",
-      status: "active",
+      password: "",
+      role_id: 2,
+      status: "ACTIVE"
     });
   };
 
   // Handle form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  // Save partner (add or edit)
-const handleSave = async (e) => {
-  e.preventDefault();
-  setIsSubmitting(true);
-
-  if (
-    !formData.company_name ||
-    !formData.name ||
-    !formData.email ||
-    !formData.phone ||
-    (!editingPartner && !formData.password)
-  ) {
-    alert("Please fill all required fields.");
-    setIsSubmitting(false);
-    return;
-  }
-
-  try {
-   const url = editingPartner
-  ? `http://localhost:3002/api/partners/${editingPartner.user_id}`
-  : "http://localhost:3002/api/partners";
-
-const method = editingPartner ? "PATCH" : "POST";
-
-const dataToSend = editingPartner
-  ? {
-      user_id: formData.user_id,
-      company_name: formData.company_name,
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      address: formData.address,
-      status: formData.status,
-    }
-  : formData;
-
-const response = await fetch(url, {
-  method,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(dataToSend),
-});
-
-    const result = await response.json();
-
-    console.log("Status:", response.status);
-    console.log("Response:", result);
-
-    if (!response.ok) {
-      throw new Error(result.message || "Failed to save partner");
-    }
-
-    await fetchPartners();
-    closeModal();
-  } catch (err) {
-    console.error(err);
-    alert(err.message);
-  } finally {
-    setIsSubmitting(false);
-  }
+    setFormData((prev) => ({
+    ...prev,
+    [name]: name === "role_id" ? Number(value) : value
+  }));
 };
 
-  // Delete partner
+  // Save user (add or edit)
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    if (!formData.full_name || !formData.email || (!editingUser && !formData.password)) {
+      alert("Please fill all required fields.");
+      setIsSubmitting(false);
+      return;
+    }
+
+    try {
+      const url = editingUser
+        ? `http://localhost:3000/api/partners/${editingUser.user_id}`
+        : "http://localhost:3000/api/partners";
+      const method = editingUser ? "PATCH" : "POST";
+console.log("Editing user", editingUser);
+      // For editing, we don't send password if empty
+      const dataToSend = {
+  full_name: formData.full_name,
+  email: formData.email,
+  status: formData.status,
+  role_id: formData.role_id,
+  password: formData.password
+};
+      if (!formData.password) {
+  delete dataToSend.password;
+ }
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(dataToSend),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to save user");
+      }
+
+      await fetchUsers();
+      closeModal();
+    } catch (err) {
+      console.error(err);
+      alert(err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Delete user
   const handleDelete = async () => {
     if (!deleteTarget) return;
     try {
       const response = await fetch(
-        `http://localhost:3002/api/partners/${deleteTarget.id}`,
+        `http://localhost:3000/api/partners/${deleteTarget.user_id}`,
         { method: "DELETE" }
       );
-      if (!response.ok) throw new Error("Failed to delete partner");
+      if (!response.ok) throw new Error("Failed to delete user");
 
-      await fetchPartners();
+      await fetchUsers();
       setDeleteTarget(null);
       setShowDeleteConfirm(false);
     } catch (err) {
-      alert("Failed to delete partner.");
+      alert("Failed to delete user.");
       console.error(err);
     }
   };
 
   // Status badge component
   const StatusBadge = ({ status }) => {
-    const isActive = status === "active";
+    const ISACTIVE = status === "ACTIVE";
     return (
       <span
         className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
-          isActive
+          ISACTIVE
             ? "bg-emerald-100 text-emerald-700"
             : "bg-gray-100 text-gray-600"
         }`}
       >
-        {isActive ? (
+        {ISACTIVE ? (
           <CheckCircle className="w-3 h-3" />
         ) : (
           <XCircle className="w-3 h-3" />
         )}
-        {isActive ? "Active" : "Inactive"}
+        {ISACTIVE ? "ACTIVE" : "INACTIVE"}
+      </span>
+    );
+  };
+
+  // Role badge component
+  const RoleBadge = ({ roles }) => {
+    const colorMap = {
+       ADMIN: "bg-purple-100 text-purple-700",
+       PARTNER: "bg-blue-100 text-blue-700",
+       FLEET_OWNER: "bg-green-100 text-green-700",
+    };
+    const bgClass = colorMap[roles] || "bg-gray-100 text-gray-700";
+    return (
+      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${bgClass}`}>
+        <Shield className="w-3 h-3 mr-1" />
+       {roles ? roles.charAt(0).toUpperCase() + roles.slice(1) : ""}
       </span>
     );
   };
@@ -242,25 +242,25 @@ const response = await fetch(url, {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-purple-50/30 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50/30 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent flex items-center gap-3">
-              <Building2 className="w-8 h-8 text-purple-600" />
-              Maintenance Partners
+              <Users className="w-8 h-8 text-blue-600" />
+              Workshop Partners
             </h1>
             <p className="text-sm text-gray-500 mt-1">
-              Manage all your maintenance partners in one place. Add, edit, or remove partners as needed.
+              Manage Workshop Partners
             </p>
           </div>
           <button
             onClick={() => openModal()}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-xl hover:shadow-lg hover:shadow-purple-200/50 transition-all hover:-translate-y-0.5 font-medium text-sm"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg hover:shadow-blue-200/50 transition-all hover:-translate-y-0.5 font-medium text-sm"
           >
             <Plus className="w-4 h-4" />
-            Add Partner
+            Fleet Owner
           </button>
         </div>
 
@@ -281,14 +281,14 @@ const response = await fetch(url, {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by company, owner, email, or mobile..."
+                placeholder="Search by name, email, phone, or role..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
               />
             </div>
             <div className="text-sm text-gray-500 whitespace-nowrap">
-              {filteredPartners.length} partner{filteredPartners.length !== 1 ? "s" : ""} found
+              {filteredUsers.length} user{filteredUsers.length !== 1 ? "s" : ""} found
             </div>
           </div>
         </div>
@@ -299,12 +299,12 @@ const response = await fetch(url, {
             <div className="p-6">
               <TableSkeleton />
             </div>
-          ) : filteredPartners.length === 0 ? (
+          ) : filteredUsers.length === 0 ? (
             <div className="text-center py-16">
-              <Building2 className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-600">No partners found</h3>
+              <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-600">No users found</h3>
               <p className="text-sm text-gray-400 mt-1">
-                {searchTerm ? "Try adjusting your search" : "Click 'Add Partner' to get started"}
+                {searchTerm ? "Try adjusting your search" : "Click 'Add User' to get started"}
               </p>
             </div>
           ) : (
@@ -313,16 +313,13 @@ const response = await fetch(url, {
                 <thead className="bg-gray-50 border-b border-gray-100">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Workshop
+                      Name
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                      Owner
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">
                       Contact
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                      Address
+                    <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                      Roles
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
                       Status
@@ -333,45 +330,35 @@ const response = await fetch(url, {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {filteredPartners.map((partner) => (
+                  {filteredUsers.map((user) => (
                     <tr
-                      key={partner.id}
-                      className="hover:bg-purple-50/30 transition-colors duration-150"
+                      key={user.user_id}
+                      className="hover:bg-blue-50/30 transition-colors duration-150"
                     >
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="font-medium text-gray-900">{partner.company_name}</div>
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4 text-gray-400" />
-                          <span className="text-gray-700">{partner.name}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                        <div className="flex flex-col gap-0.5">
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Mail className="w-3.5 h-3.5 text-gray-400" />
-                            {partner.email}
-                          </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Phone className="w-3.5 h-3.5 text-gray-400" />
-                            {partner.phone}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <MapPin className="w-3.5 h-3.5 text-gray-400" />
-                          {partner.address || "—"}
+                          <span className="font-medium text-gray-900">{user.full_name}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <StatusBadge status={partner.status} />
+                        <div className="flex flex-col gap-0.5">
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Mail className="w-3.5 h-3.5 text-gray-400" />
+                            {user.email}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
+                        <RoleBadge roles={user.role_name || user.role_id} />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <StatusBadge status={user.status} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-2">
                           <button
-                            onClick={() => openModal(partner)}
+                            onClick={() => openModal(user)}
                             className="p-1.5 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
                             title="Edit"
                           >
@@ -379,7 +366,7 @@ const response = await fetch(url, {
                           </button>
                           <button
                             onClick={() => {
-                              setDeleteTarget(partner);
+                              setDeleteTarget(user);
                               setShowDeleteConfirm(true);
                             }}
                             className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
@@ -406,7 +393,7 @@ const response = await fetch(url, {
                   <h3 className="text-lg font-bold text-gray-900">Confirm Delete</h3>
                   <p className="text-sm text-gray-500 mt-1">
                     Are you sure you want to delete{" "}
-                    <span className="font-semibold text-gray-700">{deleteTarget.company_name}</span>?
+                    <span className="font-semibold text-gray-700">{deleteTarget.full_name}</span>?
                     This action cannot be undone.
                   </p>
                 </div>
@@ -441,7 +428,7 @@ const response = await fetch(url, {
             <div className="bg-white rounded-2xl p-6 max-w-lg w-full shadow-2xl mx-auto animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
               <div className="flex items-start justify-between mb-4">
                 <h2 className="text-xl font-bold text-gray-900">
-                  {editingPartner ? "Edit Partner" : "Add New Partner"}
+                  {editingUser ? "Edit User" : "Add New User"}
                 </h2>
                 <button
                   onClick={closeModal}
@@ -454,31 +441,16 @@ const response = await fetch(url, {
               <form onSubmit={handleSave} className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Workshop <span className="text-red-500">*</span>
+                    Full Name <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
-                    name="company_name"
-                    value={formData.company_name}
+                    name="full_name"
+                    value={formData.full_name}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Enter company name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Owner Name <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Enter owner name"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Enter full name"
                   />
                 </div>
 
@@ -492,55 +464,61 @@ const response = await fetch(url, {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Enter email address"
                   />
                 </div>
 
+
+
+                {!editingUser && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Password <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      required
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Enter password"
+                    />
+                  </div>
+                )}
+
+                {editingUser && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Password (leave blank to keep current)
+                    </label>
+                    <input
+                      type="password"
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="New password (optional)"
+                    />
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Mobile <span className="text-red-500">*</span>
+                    Roles <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    name="phone"
-                    value={formData.phone}
+                  <select
+                    name="role_id"
+                    value={formData.role_id}
                     onChange={handleChange}
                     required
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Enter mobile number"
-                  />
-                </div>
-
-                {!editingPartner && (
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-1">
-      Password <span className="text-red-500">*</span>
-    </label>
-    <input
-      type="password"
-      name="password"
-      value={formData.password}
-      onChange={handleChange}
-      required
-      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500"
-      placeholder="Enter password"
-    />
-  </div>
-)}
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Address
-                  </label>
-                  <input
-                    type="text"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                    placeholder="Enter address (optional)"
-                  />
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value={1}>Admin</option>
+                    <option value={3}>Fleet Owner</option>
+                    <option value={2}>Maintenance Partner</option>                    
+                  </select>
                 </div>
 
                 <div>
@@ -551,10 +529,10 @@ const response = await fetch(url, {
                     name="status"
                     value={formData.status}
                     onChange={handleChange}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
                   </select>
                 </div>
 
@@ -569,10 +547,10 @@ const response = await fetch(url, {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-indigo-600 rounded-xl hover:shadow-lg transition disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="flex-1 px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl hover:shadow-lg transition disabled:opacity-70 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                    {editingPartner ? "Update Partner" : "Add Partner"}
+                    {editingUser ? "Update User" : "Add User"}
                   </button>
                 </div>
               </form>

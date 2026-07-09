@@ -43,15 +43,9 @@ export default function Dashboard() {
         setStats(prev => ({
           ...prev,
           users: res.data.total_users || 0,
-          partners: res.data.total_partners || 0,
-          vehicles: res.data.total_vehicles || 0,
-          drivers: res.data.total_drivers || 0,
-          workshops: res.data.total_workshops || 0
+          partners: res.data.total_partners || 0
         }));
         
-        setUserList(res.data.users || []);
-        setPartnerList(res.data.partners || []);
-        setLastUpdated(new Date());
         setLoading(false);
       })
       .catch((err) => {
@@ -78,7 +72,7 @@ export default function Dashboard() {
   const statCards = [
     {
       key: "users",
-      label: "Total Users",
+      label: "Total Fleet Owners",
       value: stats.users,
       icon: Users,
       gradient: "from-indigo-500 to-purple-600",
@@ -91,7 +85,7 @@ export default function Dashboard() {
     },
     {
       key: "partners",
-      label: "Total Partners",
+      label: "Total Workshop Partners",
       value: stats.partners,
       icon: Handshake,
       gradient: "from-emerald-500 to-teal-500",
@@ -235,16 +229,7 @@ export default function Dashboard() {
                       <div className={`p-3 rounded-xl bg-gradient-to-br ${card.gradient} shadow-lg shadow-${card.shadowColor}-200/40`}>
                         <Icon className="w-5 h-5 text-white" />
                       </div>
-                    </div>
-
-                    {/* Trend indicator */}
-                    <div className="mt-4 pt-4 border-t border-gray-100 flex items-center gap-2 relative z-10">
-                      <div className={`inline-flex items-center gap-1 text-xs font-medium ${card.trendUp ? 'text-emerald-600' : 'text-rose-600'}`}>
-                        <TrendingUp className={`w-3 h-3 ${card.trendUp ? '' : 'rotate-180'}`} />
-                        {card.trend}
-                      </div>
-                      <span className="text-xs text-gray-400">vs last month</span>
-                    </div>
+                    </div>            
 
                     {/* Hover effect overlay */}
                     <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-purple-50/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
@@ -256,30 +241,7 @@ export default function Dashboard() {
         {/* Additional Section - Quick Stats */}
         <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
           <div className="lg:col-span-2 bg-white rounded-2xl p-6 border border-gray-100 shadow-xs">
-            <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-              <BarChart3 className="w-4 h-4 text-purple-500" />
-              Quick Overview
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="text-center p-3 bg-purple-50 rounded-xl">
-                <p className="text-2xl font-bold text-purple-700">{stats.users + stats.partners}</p>
-                <p className="text-xs text-gray-500">Total Accounts</p>
-              </div>
-              <div className="text-center p-3 bg-emerald-50 rounded-xl">
-                <p className="text-2xl font-bold text-emerald-700">{stats.vehicles + stats.drivers}</p>
-                <p className="text-xs text-gray-500">Active Resources</p>
-              </div>
-              <div className="text-center p-3 bg-amber-50 rounded-xl">
-                <p className="text-2xl font-bold text-amber-700">{stats.workshops}</p>
-                <p className="text-xs text-gray-500">Workshops</p>
-              </div>
-              <div className="text-center p-3 bg-rose-50 rounded-xl">
-                <p className="text-2xl font-bold text-rose-700">
-                  {stats.vehicles > 0 ? Math.round((stats.drivers / stats.vehicles) * 100) : 0}%
-                </p>
-                <p className="text-xs text-gray-500">Driver Ratio</p>
-              </div>
-            </div>
+          
           </div>
           
           <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-6 text-white shadow-lg shadow-purple-200/50">
@@ -294,124 +256,6 @@ export default function Dashboard() {
               </span>
             </div>
           </div>
-        </div>
-
-        {/* Users Table */}
-        <div className="mt-8 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <Users className="w-5 h-5 text-purple-500" />
-              Users
-              <span className="text-sm font-normal text-gray-400 ml-2">
-                ({userList.length})
-              </span>
-            </h2>
-          </div>
-
-          {userList.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Name</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Email</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Status</th>
-                    <th className="text-right py-3 px-4 text-sm font-semibold text-gray-600">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {userList.map((user) => (
-                    <tr key={user.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                      <td className="py-3 px-4 text-sm text-gray-700 font-medium">{user.name}</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">{user.email}</td>
-                      <td className="py-3 px-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          user.status === 'active' 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-gray-100 text-gray-700'
-                        }`}>
-                          {user.status || 'Active'}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button className="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors">
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleDeleteUser(user.id)}
-                            className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-400">
-              <Users className="w-12 h-12 mx-auto mb-2 opacity-30" />
-              <p>No users found</p>
-            </div>
-          )}
-        </div>
-
-        {/* Partners Table */}
-        <div className="mt-6 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-              <Handshake className="w-5 h-5 text-emerald-500" />
-              Partners
-              <span className="text-sm font-normal text-gray-400 ml-2">
-                ({partnerList.length})
-              </span>
-            </h2>
-          </div>
-
-          {partnerList.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-gray-200">
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Company</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Email</th>
-                    <th className="text-left py-3 px-4 text-sm font-semibold text-gray-600">Status</th>
-                    <th className="text-right py-3 px-4 text-sm font-semibold text-gray-600">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {partnerList.map((partner) => (
-                    <tr key={partner.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                      <td className="py-3 px-4 text-sm text-gray-700 font-medium">{partner.company_name}</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">{partner.email}</td>
-                      <td className="py-3 px-4 text-sm text-gray-600">{partner.status}</td>
-                      <td className="py-3 px-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button className="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors">
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleDeletePartner(partner.id)}
-                            className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-400">
-              <Handshake className="w-12 h-12 mx-auto mb-2 opacity-30" />
-              <p>No partners found</p>
-            </div>
-          )}
         </div>
       </div>
     </div>

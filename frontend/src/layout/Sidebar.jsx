@@ -19,7 +19,7 @@ const navItems = [
     icon: FiUsers,
     children: [
       { to: "/vendors", label: "Partners" },
-      { to: "/users", label: "Users" },
+      { to: "/users", label: "Fleet Owners" },
     ],
   },
 

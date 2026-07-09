@@ -26,12 +26,11 @@ export default function UsersManagement() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [formData, setFormData] = useState({
-    name: "",
+    full_name: "",
     email: "",
-    phone: "",
-    password_hash: "",
-    role: "user",
-    status: "active",
+    password: "",
+    role_id: 3,
+    status: "ACTIVE",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -43,7 +42,7 @@ export default function UsersManagement() {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:3001/api/users");
+      const response = await fetch("http://localhost:3000/api/fleetowners");
       if (!response.ok) throw new Error("Failed to fetch users");
       const data = await response.json();
       console.log("Users:", data);
@@ -69,10 +68,9 @@ export default function UsersManagement() {
     } else {
       const filtered = users.filter(
         (u) =>
-          u.name.toLowerCase().includes(term) ||
+          u.full_name.toLowerCase().includes(term) ||
           u.email.toLowerCase().includes(term) ||
-          u.phone.includes(term) ||
-          u.role.toLowerCase().includes(term)
+          (u.role_name || "").toLowerCase().includes(term)
       );
       setFilteredUsers(filtered);
     }
@@ -83,24 +81,22 @@ export default function UsersManagement() {
     if (user) {
       setEditingUser(user);
       setFormData({
-        id: user.id,
-        name: user.name,
+        id: user.user_id,
+        full_name: user.full_name,
         email: user.email,
-        phone: user.phone,
-        role: user.role,
+        role_id: user.role_id,
         status: user.status,
         // password is not sent back, so we leave it empty
-        password_hash: "",
+        password: "",
       });
     } else {
       setEditingUser(null);
       setFormData({
-        name: "",
+        full_name: "",
         email: "",
-        phone: "",
-        password_hash: "",
-        role: "",
-        status: "active"
+        password: "",
+        role_id: 3,
+        status: "ACTIVE"
       });
     }
     setIsModalOpen(true);
@@ -110,28 +106,29 @@ export default function UsersManagement() {
     setIsModalOpen(false);
     setEditingUser(null);
     setFormData({
-      name: "",
+      full_name: "",
       email: "",
-      phone: "",
-      password_hash: "",
-      role: "user",
-      status: "active",
-      password_hash: "",
+      password: "",
+      role_id: 3,
+      status: "ACTIVE"
     });
   };
 
   // Handle form changes
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+    setFormData((prev) => ({
+    ...prev,
+    [name]: name === "role_id" ? Number(value) : value
+  }));
+};
 
   // Save user (add or edit)
   const handleSave = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (!formData.name || !formData.email || !formData.phone || (!editingUser && !formData.password_hash)) {
+    if (!formData.full_name || !formData.email || (!editingUser && !formData.password)) {
       alert("Please fill all required fields.");
       setIsSubmitting(false);
       return;
@@ -139,22 +136,21 @@ export default function UsersManagement() {
 
     try {
       const url = editingUser
-        ? `http://localhost:3001/api/users/${editingUser.id}`
-        : "http://localhost:3001/api/users";
+        ? `http://localhost:3000/api/fleetowners/${editingUser.user_id}`
+        : "http://localhost:3000/api/fleetowners";
       const method = editingUser ? "PATCH" : "POST";
-
+console.log("Editing user", editingUser);
       // For editing, we don't send password if empty
       const dataToSend = {
-  name: formData.name,
+  full_name: formData.full_name,
   email: formData.email,
-  phone: formData.phone,
   status: formData.status,
-  role: formData.role
+  role_id: formData.role_id,
+  password: formData.password
 };
-      if (editingUser && !dataToSend.password_hash) {
-        delete dataToSend.password_hash;
-      }
-     
+      if (!formData.password) {
+  delete dataToSend.password;
+ }
       const response = await fetch(url, {
         method,
         headers: {
@@ -184,7 +180,7 @@ export default function UsersManagement() {
     if (!deleteTarget) return;
     try {
       const response = await fetch(
-        `http://localhost:3001/api/users/${deleteTarget.id}`,
+        `http://localhost:3000/api/fleetowners/${deleteTarget.user_id}`,
         { method: "DELETE" }
       );
       if (!response.ok) throw new Error("Failed to delete user");
@@ -200,21 +196,21 @@ export default function UsersManagement() {
 
   // Status badge component
   const StatusBadge = ({ status }) => {
-    const isActive = status === "active";
+    const ISACTIVE = status === "ACTIVE";
     return (
       <span
         className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
-          isActive
+          ISACTIVE
             ? "bg-emerald-100 text-emerald-700"
             : "bg-gray-100 text-gray-600"
         }`}
       >
-        {isActive ? (
+        {ISACTIVE ? (
           <CheckCircle className="w-3 h-3" />
         ) : (
           <XCircle className="w-3 h-3" />
         )}
-        {isActive ? "Active" : "Inactive"}
+        {ISACTIVE ? "ACTIVE" : "INACTIVE"}
       </span>
     );
   };
@@ -222,15 +218,15 @@ export default function UsersManagement() {
   // Role badge component
   const RoleBadge = ({ roles }) => {
     const colorMap = {
-       admin: "bg-purple-100 text-purple-700",
-       partner: "bg-blue-100 text-blue-700",
-       user: "bg-green-100 text-green-700",
+       ADMIN: "bg-purple-100 text-purple-700",
+       PARTNER: "bg-blue-100 text-blue-700",
+       FLEET_OWNER: "bg-green-100 text-green-700",
     };
     const bgClass = colorMap[roles] || "bg-gray-100 text-gray-700";
     return (
       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${bgClass}`}>
         <Shield className="w-3 h-3 mr-1" />
-        {roles.charAt(0).toUpperCase() + roles.slice(1)}
+       {roles ? roles.charAt(0).toUpperCase() + roles.slice(1) : ""}
       </span>
     );
   };
@@ -253,10 +249,10 @@ export default function UsersManagement() {
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent flex items-center gap-3">
               <Users className="w-8 h-8 text-blue-600" />
-              Manage system accounts, roles and access permissions
+              Fleet Owners
             </h1>
             <p className="text-sm text-gray-500 mt-1">
-              Manage workshops and service providers
+              Manage Fleet Owners
             </p>
           </div>
           <button
@@ -264,7 +260,7 @@ export default function UsersManagement() {
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg hover:shadow-blue-200/50 transition-all hover:-translate-y-0.5 font-medium text-sm"
           >
             <Plus className="w-4 h-4" />
-            Add User
+            Fleet Owner
           </button>
         </div>
 
@@ -336,13 +332,13 @@ export default function UsersManagement() {
                 <tbody className="divide-y divide-gray-50">
                   {filteredUsers.map((user) => (
                     <tr
-                      key={user.id}
+                      key={user.user_id}
                       className="hover:bg-blue-50/30 transition-colors duration-150"
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4 text-gray-400" />
-                          <span className="font-medium text-gray-900">{user.name}</span>
+                          <span className="font-medium text-gray-900">{user.full_name}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -351,14 +347,10 @@ export default function UsersManagement() {
                             <Mail className="w-3.5 h-3.5 text-gray-400" />
                             {user.email}
                           </div>
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Phone className="w-3.5 h-3.5 text-gray-400" />
-                            {user.phone}
-                          </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
-                        <RoleBadge roles={user.roles} />
+                        <RoleBadge roles={user.role_name || user.role_id} />
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <StatusBadge status={user.status} />
@@ -401,7 +393,7 @@ export default function UsersManagement() {
                   <h3 className="text-lg font-bold text-gray-900">Confirm Delete</h3>
                   <p className="text-sm text-gray-500 mt-1">
                     Are you sure you want to delete{" "}
-                    <span className="font-semibold text-gray-700">{deleteTarget.name}</span>?
+                    <span className="font-semibold text-gray-700">{deleteTarget.full_name}</span>?
                     This action cannot be undone.
                   </p>
                 </div>
@@ -453,8 +445,8 @@ export default function UsersManagement() {
                   </label>
                   <input
                     type="text"
-                    name="name"
-                    value={formData.name}
+                    name="full_name"
+                    value={formData.full_name}
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -477,20 +469,7 @@ export default function UsersManagement() {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Mobile <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Enter mobile number"
-                  />
-                </div>
+
 
                 {!editingUser && (
                   <div>
@@ -499,8 +478,8 @@ export default function UsersManagement() {
                     </label>
                     <input
                       type="password"
-                      name="password_hash"
-                      value={formData.password_hash}
+                      name="password"
+                      value={formData.password}
                       onChange={handleChange}
                       required
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -516,8 +495,8 @@ export default function UsersManagement() {
                     </label>
                     <input
                       type="password"
-                      name="password_hash"
-                      value={formData.password_hash}
+                      name="password"
+                      value={formData.password}
                       onChange={handleChange}
                       className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="New password (optional)"
@@ -530,15 +509,15 @@ export default function UsersManagement() {
                     Roles <span className="text-red-500">*</span>
                   </label>
                   <select
-                    name="role"
-                    value={formData.roles}
+                    name="role_id"
+                    value={formData.role_id}
                     onChange={handleChange}
                     required
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="admin">Admin</option>
-                    <option value="partner">MaintenancePartner</option>
-                    <option value="user">Fleet Owner</option>
+                    <option value={1}>Admin</option>
+                    <option value={3}>Fleet Owner</option>
+                    <option value={2}>MaintenancePartner</option>                    
                   </select>
                 </div>
 
@@ -552,8 +531,8 @@ export default function UsersManagement() {
                     onChange={handleChange}
                     className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
                   </select>
                 </div>
 
