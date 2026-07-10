@@ -24,7 +24,7 @@ const navItems = [
   },
 
   { to: "/employees", label: "Employees", icon: FiBriefcase },
-  { to: "/drivers", label: "Drivers", icon: FiUsers },
+  { to: "/servicecategory", label: "Service Category", icon: FiUsers },
   { to: "/vehicles", label: "Vehicles", icon: FiTruck },
   { to: "/bookings", label: "Bookings", icon: FiCalendar },
   { to: "/trips", label: "Trips", icon: FiMap },

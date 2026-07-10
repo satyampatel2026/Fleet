@@ -11,6 +11,9 @@ app.use(express.json());
 const userRouter= require("./Routes/userRoute/userRoute");
 app.use("/api", userRouter);
 
+const serviceCategoryRouter= require("./Routes/serviceCategoryRoute/serviceCategoryRoute");
+app.use("/api" ,serviceCategoryRouter )
+
 const roleRouter=require("./Routes/roleRoute/roleRoute");
 app.use("/api/role", roleRouter);
 
