@@ -12,17 +12,17 @@ import {
 } from 'react-icons/fi';
 
 const navItems = [
-  { to: "/dashboard", label: "Dashboard", icon: FiHome },   
+  { to: "/admin/dashboard", label: "Dashboard", icon: FiHome },   
 
-  {
-    label: "Users",
-    icon: FiUsers,
-    children: [
-      { to: "/vendors", label: "Partners" },
-      { to: "/users", label: "Fleet Owners" },
-    ],
-  },
-
+  // {
+  //   label: "Users",
+  //   icon: FiUsers,
+  //   children: [
+  //     { to: "/vendors", label: "Partners" },
+  //     { to: "/users", label: "Fleet Owners" },
+  //   ],
+  // },
+   { to: "/admin/users", label: "User Management", icon: FiBriefcase },
   { to: "/employees", label: "Employees", icon: FiBriefcase },
   { to: "/servicecategory", label: "Service Category", icon: FiUsers },
   { to: "/vehicles", label: "Vehicles", icon: FiTruck },

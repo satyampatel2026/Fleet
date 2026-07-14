@@ -1,10 +1,11 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   FiMenu,
   FiBell,
   FiSun,
   FiMoon,
   FiUser,
+  FiLogOut,
 } from "react-icons/fi";
 
 export default function Navbar({
@@ -12,12 +13,21 @@ export default function Navbar({
   dark,
   onToggleTheme,
 }) {
-  return (
-    // <header className="sticky top-0 z-50 glass border-b border-slate-200/50 dark:border-slate-700/50">
-    <header className="sticky top-0 z-50 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 shadow-sm">
-      <div className="flex h-16 items-center justify-between px-4 md:px-6">
+  const navigate = useNavigate();
 
-        {/* Left */}
+  const handleLogout = () => {
+    localStorage.removeItem("adminToken");
+    localStorage.removeItem("adminUser");
+
+    navigate("/admin/login", {
+      replace: true,
+    });
+  };
+
+  return (
+    <header className="sticky top-0 z-50 border-b border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
+      <div className="flex h-16 items-center justify-between px-4 md:px-6">
+        {/* Left side */}
         <div className="flex items-center gap-4">
           <button
             type="button"
@@ -27,20 +37,28 @@ export default function Navbar({
           >
             <FiMenu className="h-5 w-5" />
           </button>
+
+          <h1 className="hidden text-lg font-semibold text-slate-800 dark:text-white sm:block">
+            Admin Dashboard
+          </h1>
         </div>
 
-        {/* Right */}
+        {/* Right side */}
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onToggleTheme}
-            aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={
+              dark
+                ? "Switch to light mode"
+                : "Switch to dark mode"
+            }
             className="rounded-xl p-2.5 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
           >
             {dark ? (
-              <FiSun className="h-5 w-5" />
+              <FiSun className="h-5 w-5 text-slate-200" />
             ) : (
-              <FiMoon className="h-5 w-5" />
+              <FiMoon className="h-5 w-5 text-slate-700" />
             )}
           </button>
 
@@ -49,7 +67,8 @@ export default function Navbar({
             aria-label="Notifications"
             className="relative rounded-xl p-2.5 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
           >
-            <FiBell className="h-5 w-5" />
+            <FiBell className="h-5 w-5 text-slate-700 dark:text-slate-200" />
+
             <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-900" />
           </Link>
 
@@ -57,20 +76,34 @@ export default function Navbar({
             to="/profile"
             className="flex items-center gap-3 rounded-xl py-1.5 pl-2 pr-3 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-brand-400 to-brand-600">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-blue-400 to-blue-600">
               <FiUser className="h-4 w-4 text-white" />
             </div>
 
             <div className="hidden text-left sm:block">
-              <p className="text-sm font-medium">Admin User</p>
+              <p className="text-sm font-medium text-slate-800 dark:text-white">
+                Admin User
+              </p>
+
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 Super Admin
               </p>
             </div>
           </Link>
-        </div>
 
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="flex items-center gap-2 rounded-xl bg-red-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+          >
+            <FiLogOut className="h-4 w-4" />
+
+            <span className="hidden md:inline">
+              Logout
+            </span>
+          </button>
+        </div>
       </div>
     </header>
   );
-}   
+}
