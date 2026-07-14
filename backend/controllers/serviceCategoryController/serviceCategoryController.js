@@ -40,18 +40,9 @@ const getServiceCategory = (req, res) => {
 
       const updateServiceCategory = (req, res) => {
      const { category_name, description, status } = req.body;
-    const query = `
-        UPDATE service_categories
-        SET category_name=?,
-            description=?,
-            status=?
-        WHERE category_id=?
-    `;  connection.query(
-        query,
-        [category_name, description, status, req.params.id],
-        (err, result) => {
-
-            if (err) {
+    const query = ` UPDATE service_categories SET category_name=?, description=?, status=? WHERE category_id=? `; 
+     connection.query( query, [category_name, description, status, req.params.id], (err, result) => {
+             if (err) {
                 console.log(err.message);
                 return res.status(500).json({
                     message: "Database error"

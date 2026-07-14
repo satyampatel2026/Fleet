@@ -9,7 +9,7 @@ const {
   deleteUser,
   restoreUser,
 } = require('../../controllers/userController/userController');
-const { validateUserCreate, validateUserUpdate } = require('../../controllers/userController/userValidation');
+// const { validateUserCreate, validateUserUpdate } = require('../../controllers/userController/userValidation');
 const {
   verifyToken,
   adminOnly,
@@ -26,10 +26,10 @@ userRouter.get("/", getUsers);
 userRouter.get("/:id", getUserById);
 
 // Create user
-userRouter.post("/",validateUserCreate, postUser);
+userRouter.post("/",postUser);
 
 // Update user and role
-userRouter.patch("/:id", validateUserUpdate,updateUser);
+userRouter.patch("/:id", updateUser);
 
 // Soft delete
 userRouter.delete("/:id", deleteUser);

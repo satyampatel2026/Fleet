@@ -11,12 +11,7 @@ const getUsers = (req, res) => {
 
   // Search by name or email
   if (search && search.trim() !== "") {
-    query += `
-      AND (
-        u.full_name LIKE ?
-        OR u.email LIKE ?
-      )
-    `;
+    query += `AND ( u.full_name LIKE ? OR u.email LIKE ? ) `;
 
     const searchValue = `%${search.trim()}%`;
 
@@ -66,22 +61,7 @@ const getUsers = (req, res) => {
 const getUserById = (req, res) => {
   const userId = req.params.id;
 
-  const query = `
-    SELECT
-      u.user_id,
-      u.full_name,
-      u.email,
-      u.status,
-      u.created_at,
-      r.role_id,
-      r.role_name
-    FROM users u
-    LEFT JOIN user_roles ur
-      ON u.user_id = ur.user_id
-    LEFT JOIN roles r
-      ON ur.role_id = r.role_id
-    WHERE u.user_id = ?
-  `;
+  const query = ` SELECT u.user_id, u.full_name, u.email, u.status, u.created_at, r.role_id, r.role_name FROM users u LEFT JOIN user_roles ur ON u.user_id = ur.user_id LEFT JOIN roles r ON ur.role_id = r.role_id WHERE u.user_id = ? `;
 
   connection.query(query, [userId], (error, result) => {
     if (error) {
@@ -111,11 +91,7 @@ const getUserById = (req, res) => {
 
 
 const getRoles = (req, res) => {
-  const query = `
-    SELECT role_id, role_name
-    FROM roles
-    ORDER BY role_id ASC
-  `;
+  const query = ` SELECT role_id, role_name FROM roles ORDER BY role_id ASC `;
 
   connection.query(query, (error, result) => {
     if (error) {
@@ -137,13 +113,7 @@ const getRoles = (req, res) => {
 
 
 const postUser = async (req, res) => {
-  const {
-    full_name,
-    email,
-    password,
-    role_id,
-    status = "ACTIVE",
-  } = req.body;
+  const { full_name, email, password, role_id, status = "ACTIVE", } = req.body;
 
   // Required fields validation
   if (!full_name || !email || !password || !role_id) {
@@ -292,13 +262,7 @@ const postUser = async (req, res) => {
 const updateUser =  async(req, res) => {
   const userId = req.params.id;
 
-  const {
-    full_name,
-    email,
-    password,
-    role_id,
-    status,
-  } = req.body;
+  const {full_name, email, password, role_id, status,} = req.body;
 
   if (!full_name || !email || !role_id || !status) {
     return res.status(400).json({
@@ -356,11 +320,7 @@ const updateUser =  async(req, res) => {
 
         // Check whether selected role exists
         connection.query(
-          `
-            SELECT role_id, role_name
-            FROM roles
-            WHERE role_id = ?
-          `,
+          `SELECT role_id, role_name FROM roles WHERE role_id = ?  `,
           [role_id],
           async(roleError, roleResult) => {
             if (roleError) {
@@ -391,15 +351,7 @@ const updateUser =  async(req, res) => {
               typeof password === "string" &&
               password.trim() !== ""
             ) {  const hashedPassword = await bcrypt.hash( password.trim(), 10);
-              updateUserQuery = `
-                UPDATE users
-                SET
-                  full_name = ?,
-                  email = ?,
-                  password = ?,
-                  status = ?
-                WHERE user_id = ?
-              `;
+              updateUserQuery = `UPDATE users SET full_name = ?, email = ?, password = ?, status = ? WHERE user_id = ? `;
 
               updateUserData = [
                 full_name.trim(),
@@ -409,14 +361,7 @@ const updateUser =  async(req, res) => {
                 userId,
               ];
             } else {
-              updateUserQuery = `
-                UPDATE users
-                SET
-                  full_name = ?,
-                  email = ?,
-                  status = ?
-                WHERE user_id = ?
-              `;
+              updateUserQuery = ` UPDATE users SET full_name = ?, email = ?, status = ? WHERE user_id = ?  `;
 
               updateUserData = [
                 full_name.trim(),
@@ -451,11 +396,7 @@ const updateUser =  async(req, res) => {
                 }
 
              
-                const updateRoleQuery = `
-                  UPDATE user_roles
-                  SET role_id = ?
-                  WHERE user_id = ?
-                `;
+                const updateRoleQuery = ` UPDATE user_roles SET role_id = ? WHERE user_id = ? `;
 
                 connection.query(
                   updateRoleQuery,
@@ -472,11 +413,7 @@ const updateUser =  async(req, res) => {
                     }
 
                     if (updateRoleResult.affectedRows === 0) {
-                      const insertRoleQuery = `
-                        INSERT INTO user_roles
-                          (user_id, role_id)
-                        VALUES (?, ?)
-                      `;
+                      const insertRoleQuery = `INSERT INTO user_roles (user_id, role_id) VALUES (?, ?) `;
 
                       connection.query(
                         insertRoleQuery,
@@ -548,11 +485,7 @@ const updateUser =  async(req, res) => {
 const deleteUser = (req, res) => {
   const userId = req.params.id;
 
-  const query = `
-    UPDATE users
-    SET status = 'INACTIVE'
-    WHERE user_id = ?
-  `;
+  const query = ` UPDATE users SET status = 'INACTIVE' WHERE user_id = ? `;
 
   connection.query(query, [userId], (error, result) => {
     if (error) {
@@ -584,11 +517,7 @@ const deleteUser = (req, res) => {
 const restoreUser = (req, res) => {
   const userId = req.params.id;
 
-  const query = `
-    UPDATE users
-    SET status = 'ACTIVE'
-    WHERE user_id = ?
-  `;
+  const query = ` UPDATE users SET status = 'ACTIVE' WHERE user_id = ? `;
 
   connection.query(query, [userId], (error, result) => {
     if (error) {
@@ -615,12 +544,4 @@ const restoreUser = (req, res) => {
   });
 };
 
-module.exports = {
-  getUsers,
-  getUserById,
-  getRoles,
-  postUser,
-  updateUser,
-  deleteUser,
-  restoreUser,
-};
+module.exports = {getUsers, getUserById, getRoles,postUser, updateUser,deleteUser,restoreUser,};

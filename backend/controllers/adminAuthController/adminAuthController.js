@@ -4,9 +4,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
 
-// ===============================
-// ADMIN LOGIN
-// ===============================
+
 const adminLogin = (req, res) => {
   const { email, password } = req.body;
 
@@ -17,23 +15,7 @@ const adminLogin = (req, res) => {
     });
   }
 
-  const query = `
-    SELECT
-      u.user_id,
-      u.full_name,
-      u.email,
-      u.password,
-      u.status,
-      r.role_id,
-      r.role_name
-    FROM users u
-    INNER JOIN user_roles ur
-      ON u.user_id = ur.user_id
-    INNER JOIN roles r
-      ON ur.role_id = r.role_id
-    WHERE u.email = ?
-    LIMIT 1
-  `;
+  const query = `SELECT u.user_id, u.full_name, u.email, u.password, u.status, r.role_id, r.role_name FROM users u INNER JOIN user_roles ur ON u.user_id = ur.user_id INNER JOIN roles r ON ur.role_id = r.role_id WHERE u.email = ? LIMIT 1 `;
 
   connection.query(
     query,
@@ -127,21 +109,7 @@ const forgotPassword = (req, res) => {
     });
   }
 
-  const findUserQuery = `
-    SELECT
-      u.user_id,
-      u.full_name,
-      u.email,
-      u.status,
-      r.role_name
-    FROM users u
-    INNER JOIN user_roles ur
-      ON u.user_id = ur.user_id
-    INNER JOIN roles r
-      ON ur.role_id = r.role_id
-    WHERE u.email = ?
-    LIMIT 1
-  `;
+  const findUserQuery = `SELECT u.user_id, u.full_name, u.email, u.status, r.role_name FROM users u INNER JOIN user_roles ur ON u.user_id = ur.user_id INNER JOIN roles r ON ur.role_id = r.role_id WHERE u.email = ? LIMIT 1 `;
 
   connection.query(
     findUserQuery,
@@ -369,18 +337,7 @@ const resetPassword = (req, res) => {
     .update(token)
     .digest("hex");
 
-  const findTokenQuery = `
-    SELECT
-      reset_id,
-      user_id,
-      expires_at,
-      used
-    FROM password_reset_tokens
-    WHERE reset_token = ?
-      AND used = FALSE
-      AND expires_at > NOW()
-    LIMIT 1
-  `;
+  const findTokenQuery = ` SELECT reset_id, user_id, expires_at, used FROM password_reset_tokens WHERE reset_token = ? AND used = FALSE AND expires_at > NOW() LIMIT 1 `;
 
   connection.query(
     findTokenQuery,
@@ -413,11 +370,7 @@ const resetPassword = (req, res) => {
           });
         }
 
-        const updatePasswordQuery = `
-          UPDATE users
-          SET password = ?
-          WHERE user_id = ?
-        `;
+        const updatePasswordQuery = `UPDATE users SET password = ? WHERE user_id = ? `;
 
         connection.query(
           updatePasswordQuery,
@@ -480,8 +433,4 @@ const resetPassword = (req, res) => {
   );
 };
 
-module.exports = {
-  adminLogin,
-  forgotPassword,
-  resetPassword,
-};  
+module.exports = {adminLogin,forgotPassword, resetPassword,};  
